@@ -1,4 +1,5 @@
 const GNEWS_KEY = import.meta.env.VITE_GNEWS_KEY;
+console.log(`[Diagnostics] VITE_GNEWS_KEY is ${GNEWS_KEY ? `defined (length: ${GNEWS_KEY.length})` : 'undefined'}`);
 
 export async function fetchDisasterNews(locationName, category = 'all') {
   const locationShort = locationName.split(',')[0].trim();

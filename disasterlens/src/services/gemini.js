@@ -1,4 +1,5 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+console.log(`[Diagnostics] VITE_GEMINI_API_KEY is ${API_KEY ? `defined (length: ${API_KEY.length})` : 'undefined'}`);
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`;
 
 async function callGemini(prompt, onStatusUpdate) {
