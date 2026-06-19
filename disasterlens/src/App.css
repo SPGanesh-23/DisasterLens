@@ -127,7 +127,7 @@ body {
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 2000;
   border-bottom: 1px solid rgba(56,189,248,0.08);
 }
 /* Slow-moving gradient hairline — echoes the hero's gradient text
