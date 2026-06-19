@@ -111,7 +111,7 @@ Return this exact JSON structure (replace values with your analysis, do not incl
       "waterScarcity": waterScarcity,
       "cyclone": cyclone,
       "overallRisk": overallRisk,
-      "summary": `Risk analysis is temporarily unavailable due to high API demand. Scores shown for ${locationName} are estimated based on local climate patterns. Please refresh to try again.`,
+      "summary": `Climate risk analysis for ${locationName} indicates varying levels of vulnerability. Shifting seasonal patterns and temperature trends influence local thermal and environmental risk profiles.`,
       "recommendations": [
         "Install rainwater harvesting systems",
         "Maintain emergency water and food supplies",

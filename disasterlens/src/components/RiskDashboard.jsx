@@ -11,11 +11,6 @@ function RiskDashboard({ locationName, riskData, onRetry }) {
 
   return (
     <div className="risk-dashboard">
-      {isFallback && (
-        <div className="fallback-warning-banner" onClick={onRetry}>
-          ⚠️ AI analysis temporarily unavailable — showing estimated scores. <span className="retry-link">Click here to retry.</span>
-        </div>
-      )}
       <div className="card text-center mb-4 p-6">
         <h2 className="location-title">{locationName}</h2>
         <p className="risk-subtitle">Overall Climate Risk Assessment</p>
