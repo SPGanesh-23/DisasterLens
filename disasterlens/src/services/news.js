@@ -33,38 +33,39 @@ export async function fetchDisasterNews(locationName, category = 'all') {
 
 function getFallbackArticles(locationName, category) {
   const city = locationName.split(',')[0].trim();
-  return [
+  const articles = [
     {
       title: `${city} Climate Adaptation Plan Outlines New Extreme Weather Protections`,
       description: `Local authorities in ${city} have introduced an updated environmental framework to fortify critical infrastructure against intensifying seasonal shifts and extreme events.`,
       image: null,
       source: { name: "Environmental News Wire" },
-      publishedAt: new Date(Date.now() - 3.5 * 3600 * 1000).toISOString(),
-      url: "https://gnews.io"
+      publishedAt: new Date(Date.now() - 3.5 * 3600 * 1000).toISOString()
     },
     {
       title: `How ${city} Residents Can Improve Stormwater Runoff Absorption at Home`,
       description: `Urban landscaping workshops in the ${city} area are teaching homeowners how to install bioswales, rain gardens, and rain barrels to handle heavy monsoon downpours.`,
       image: null,
       source: { name: "Municipal Green Living" },
-      publishedAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString(),
-      url: "https://gnews.io"
+      publishedAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString()
     },
     {
       title: `Regional Water Conservation Guidelines Issued Amidst Prolonged Dry Spell`,
       description: `Water resource boards covering ${city} advise citizens to upgrade faucets with low-flow aerators and fix minor plumbing leaks immediately to reduce water scarcity impact.`,
       image: null,
       source: { name: "Water Management Today" },
-      publishedAt: new Date(Date.now() - 44 * 3600 * 1000).toISOString(),
-      url: "https://gnews.io"
+      publishedAt: new Date(Date.now() - 44 * 3600 * 1000).toISOString()
     },
     {
       title: `Meteorological Agency Enhances Early Warning Broadcasts for Coastal Regions`,
       description: `New meteorological tracking tools will provide the ${city} district with faster alerts for rapid storm developments and major storm surges.`,
       image: null,
       source: { name: "Emergency Broadcast Network" },
-      publishedAt: new Date(Date.now() - 68 * 3600 * 1000).toISOString(),
-      url: "https://gnews.io"
+      publishedAt: new Date(Date.now() - 68 * 3600 * 1000).toISOString()
     }
   ];
+
+  return articles.map(art => ({
+    ...art,
+    url: `https://news.google.com/search?q=${encodeURIComponent(art.title)}`
+  }));
 }
