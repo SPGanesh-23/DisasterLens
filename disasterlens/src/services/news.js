@@ -15,7 +15,10 @@ export async function fetchDisasterNews(locationName, category = 'all') {
 
   const query = queries[category] || queries.all;
 
-  const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=8&sortby=publishedAt&apikey=${GNEWS_KEY}`;
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const url = isLocalhost
+    ? `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=8&sortby=publishedAt&apikey=${GNEWS_KEY}`
+    : `/api/news?query=${encodeURIComponent(query)}`;
 
   try {
     const res = await fetch(url);
