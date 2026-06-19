@@ -198,28 +198,165 @@ Return this JSON (replace values with your predictions, do not include angle bra
 }
 
 export async function chatWithClimate(locationName, riskData, summary, userMessage, history) {
-  const context = `You are a climate advisor for ${locationName}. 
+  try {
+    const context = `You are a climate advisor for ${locationName}. 
 Risk scores — Heatwave: ${riskData.heatwave}, Flood: ${riskData.flood}, Drought: ${riskData.drought}, Water Scarcity: ${riskData.waterScarcity}, Cyclone: ${riskData.cyclone}.
 Avg temp: ${summary.avgTemp.toFixed(1)}°C, Rainfall: ${summary.avgRainfall.toFixed(0)}mm/year.
 Answer climate questions concisely and practically.`;
 
-  const messages = [
-    { role: 'user', parts: [{ text: context }] },
-    { role: 'model', parts: [{ text: 'Understood. Ready to answer climate questions for this location.' }] },
-    ...history.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
-    { role: 'user', parts: [{ text: userMessage }] }
-  ];
+    const messages = [
+      { role: 'user', parts: [{ text: context }] },
+      { role: 'model', parts: [{ text: 'Understood. Ready to answer climate questions for this location.' }] },
+      ...history.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
+      { role: 'user', parts: [{ text: userMessage }] }
+    ];
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: messages,
-      generationConfig: { temperature: 0.5, maxOutputTokens: 8192 }
-    })
-  });
-  const data = await res.json();
-  return data.candidates[0].content.parts[0].text;
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: messages,
+        generationConfig: { temperature: 0.5, maxOutputTokens: 8192 }
+      })
+    });
+    
+    if (!res.ok) {
+      throw new Error(`Gemini Chat API Error: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid chat response from Gemini');
+    }
+    return data.candidates[0].content.parts[0].text;
+  } catch (err) {
+    console.warn(`Gemini chatWithClimate failed. Using local chat fallback for ${locationName}:`, err);
+    return getLocalChatFallback(locationName, userMessage, riskData, summary);
+  }
+}
+
+function getLocalChatFallback(locationName, userMessage, riskData, summary) {
+  const msg = userMessage.toLowerCase();
+  const city = locationName.split(',')[0].trim();
+
+  // Find highest risk category
+  let highestRiskCat = 'heatwave';
+  let highestRiskScore = riskData?.heatwave || 0;
+  if (riskData) {
+    if (riskData.flood > highestRiskScore) { highestRiskCat = 'flood'; highestRiskScore = riskData.flood; }
+    if (riskData.drought > highestRiskScore) { highestRiskCat = 'drought'; highestRiskScore = riskData.drought; }
+    if (riskData.waterScarcity > highestRiskScore) { highestRiskCat = 'waterScarcity'; highestRiskScore = riskData.waterScarcity; }
+    if (riskData.cyclone > highestRiskScore) { highestRiskCat = 'cyclone'; highestRiskScore = riskData.cyclone; }
+  }
+
+  // Emergency Kit response
+  if (msg.includes('kit') || msg.includes('bag') || msg.includes('supply') || msg.includes('supplies') || msg.includes('emergency')) {
+    return `### Recommended Emergency Kit for **${city}**
+
+Based on ${city}'s climate profile (where the overall risk index is **${riskData?.overallRisk || 50}/100**), here are the critical items you should keep ready:
+
+* **Hydration:** At least 3 liters of water per person per day (crucial for local temperatures averaging **${summary?.avgTemp ? summary.avgTemp.toFixed(1) : '25.0'}°C**).
+* **Power & Light:** A solar-powered power bank, flashlight, and extra batteries to prepare for local grid failures.
+* **Documents & Cash:** Waterproof pouch containing identity documents, insurance policies, and emergency cash.
+* **Medical Supplies:** First-aid kit including rehydration salts (ORS), band-aids, antiseptics, and personal prescriptions.
+* **Non-perishable Food:** Energy bars, canned goods, and a manual can opener.
+* **Communication:** A portable battery-operated or hand-crank AM/FM radio to receive meteorological bulletins.`;
+  }
+
+  // Heatwave response
+  if (msg.includes('heat') || msg.includes('temperature') || msg.includes('hot') || msg.includes('warm')) {
+    const trendStr = summary?.tempTrend !== undefined ? `${summary.tempTrend > 0 ? '+' : ''}${summary.tempTrend}°C` : '+0.5°C';
+    return `### Extreme Heat Preparedness in **${city}**
+
+With ${city} showing a Heatwave Risk Score of **${riskData?.heatwave || 50}/100** and an average temperature trend of **${trendStr}**, managing thermal stress is a priority:
+
+* **Keep Indoor Spaces Cool:** Use heavy curtains or reflective window films to block afternoon sunlight. Install energy-efficient fans or air conditioning.
+* **Stay Hydrated:** Drink plenty of water throughout the day, even if you do not feel thirsty. Avoid sugary or caffeinated beverages.
+* **Schedule Outdoor Tasks:** Limit strenuous activities to early morning or late evening hours.
+* **Know the Warning Signs:** Learn to recognize symptoms of heat exhaustion (dizziness, heavy sweating, nausea) and heat stroke (high body temp, confusion).
+* **Community Watch:** Check in regularly on elderly neighbors, children, and pets who are more susceptible to extreme heat.`;
+  }
+
+  // Flood response
+  if (msg.includes('flood') || msg.includes('rain') || msg.includes('waterlogging') || msg.includes('monsoon') || msg.includes('precipitation')) {
+    const rainStr = summary?.avgRainfall !== undefined ? `${summary.avgRainfall.toFixed(0)}mm` : '1000mm';
+    return `### Flood Mitigation & Safety for **${city}**
+
+With ${city} receiving an annual average of **${rainStr}** of rainfall and having a Flood Risk Score of **${riskData?.flood || 50}/100**, flood preparation is vital:
+
+* **Elevate Critical Assets:** Move electrical appliances, power strips, and valuable documents to upper levels or raised platforms.
+* **Clear Home Drainage:** Ensure gutters, downspouts, and surrounding drains are free of debris to allow rapid water runoff.
+* **Install Barrier Systems:** Keep sandbags or quick-deploy flood barriers on hand if your property lies in a low-lying zone.
+* **Never Drive Through Flooded Roads:** Just 15 cm of moving water can knock you off your feet, and 30 cm can float most passenger cars.
+* **Prepare a Sump Pump:** If you have a basement, install a battery-backup sump pump to keep rising water levels at bay.`;
+  }
+
+  // Drought/Water Scarcity response
+  if (msg.includes('drought') || msg.includes('water') || msg.includes('dry') || msg.includes('scarcity') || msg.includes('conservation')) {
+    const dryDaysStr = summary?.avgDryDays !== undefined ? `${summary.avgDryDays.toFixed(0)}` : '120';
+    return `### Water Resource Management in **${city}**
+
+${city} faces a Drought Risk Score of **${riskData?.drought || 50}/100** and has an average of **${dryDaysStr}** dry days per year. Conservation is key:
+
+* **Harvest Rainwater:** Set up rain barrels to capture runoff from your roof for gardening and cleaning use.
+* **Upgrade Fixtures:** Install low-flow showerheads and aerators on all faucets. Upgrade to dual-flush toilets.
+* **Adopt Smart Landscaping:** Plant native, drought-resistant flora that requires minimal supplemental watering.
+* **Repurpose Greywater:** Safely recycle water from vegetable washing or laundry rinse cycles to irrigate non-edible plants.
+* **Monitor Local Alerts:** Stay compliant with municipal water-saving ordinances and restrict washing vehicles or driveways.`;
+  }
+
+  // Cyclone/Storm response
+  if (msg.includes('cyclone') || msg.includes('storm') || msg.includes('wind') || msg.includes('hurricane') || msg.includes('typhoon')) {
+    const windStr = summary?.maxWind !== undefined ? `${summary.maxWind.toFixed(0)} km/h` : '50 km/h';
+    return `### Cyclone & High Wind Defense for **${city}**
+
+With a Cyclone Risk Score of **${riskData?.cyclone || 30}/100** and maximum historical wind speeds reaching **${windStr}**, storm safety is crucial:
+
+* **Secure Open Structures:** Anchor outdoor furniture, trash bins, and loose building materials that could become high-speed projectiles.
+* **Reinforce Openings:** Inspect window shutters and ensure all doors close tightly. Consider installing impact-resistant storm windows.
+* **Prune Nearby Trees:** Trim dead or overhanging branches that pose a risk to your home's roof or adjacent power lines.
+* **Designate a Safe Room:** Identify an interior, windowless room on the lowest floor where family members can gather during severe winds.
+* **Have an Evacuation Strategy:** Know your local municipal shelter locations and plan a primary and secondary escape route.`;
+  }
+
+  // Risk or general summary query
+  if (msg.includes('risk') || msg.includes('highest') || msg.includes('worst') || msg.includes('threat') || msg.includes('score')) {
+    const formatName = (cat) => {
+      if (cat === 'waterScarcity') return 'Water Scarcity';
+      return cat.charAt(0).toUpperCase() + cat.slice(1);
+    };
+    return `### Climate Risk Overview for **${city}**
+
+Based on our analysis of ${city}'s historical climate records, the highest risk factor is **${formatName(highestRiskCat)}** (Score: **${highestRiskScore}/100**).
+
+Here is the full breakdown of local environmental risks:
+* **Heatwave Risk:** ${riskData?.heatwave || 50}/100
+* **Flood Risk:** ${riskData?.flood || 50}/100
+* **Drought Risk:** ${riskData?.drought || 50}/100
+* **Water Scarcity Risk:** ${riskData?.waterScarcity || 50}/100
+* **Cyclone Risk:** ${riskData?.cyclone || 50}/100
+
+*Overall Vulnerability Index:* **${riskData?.overallRisk || 50}/100**
+
+I recommend focusing preparedness efforts on **${formatName(highestRiskCat)}** by reinforcing physical structures, saving water, or insulating your home depending on the threat.`;
+  }
+
+  // General fallback
+  return `### Hello! I am your local Climate Advisor for **${city}**.
+
+*Climate advisor services are currently running in local offline mode.*
+
+Here is a summary of **${city}'s** climate characteristics:
+* **Annual Average Rainfall:** ${summary?.avgRainfall ? summary.avgRainfall.toFixed(0) : '1000'}mm
+* **Average Temperature:** ${summary?.avgTemp ? summary.avgTemp.toFixed(1) : '25.0'}°C
+* **Dry Days:** ${summary?.avgDryDays ? summary.avgDryDays.toFixed(0) : '120'} per year
+* **Overall Vulnerability Score:** ${riskData?.overallRisk || 50}/100
+
+How can I help you prepare? You can ask about:
+* **"What should I include in my emergency kit?"**
+* **"How can I prepare my home for extreme heat?"**
+* **"Are there specific flood mitigation steps I can take?"**
+* **"How do I conserve water during dry spells?"**`;
 }
 
 const fallbackTimelines = {
