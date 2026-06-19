@@ -9,12 +9,14 @@ import PrepAdvisor from './components/PrepAdvisor';
 import FutureSimulator from './components/FutureSimulator';
 import ClimateChat from './components/ClimateChat';
 import LocationCompare from './components/LocationCompare';
+import InfoModal from './components/InfoModal';
 import { fetchClimateData } from './services/climate';
 import { analyzeClimateRisk } from './services/gemini';
 import './App.css';
 
 function App() {
   const [location, setLocation] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // null | 'how-it-works' | 'about'
   const [climateData, setClimateData] = useState(null);
   const [riskData, setRiskData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -68,9 +70,9 @@ function App() {
           </div>
         </div>
         <div className={`header-links ${menuOpen ? 'open' : ''}`}>
-          <a href="#" className="nav-pill" onClick={() => setMenuOpen(false)}>How it works</a>
-          <a href="#" className="nav-pill" onClick={() => setMenuOpen(false)}>About</a>
-          <a href="#" className="nav-pill" onClick={() => setMenuOpen(false)}>GitHub</a>
+          <button className="nav-pill" onClick={() => { setActiveModal('how-it-works'); setMenuOpen(false); }}>How it works</button>
+          <button className="nav-pill" onClick={() => { setActiveModal('about'); setMenuOpen(false); }}>About</button>
+          <a href="https://github.com/SPGanesh-23/DisasterLens" target="_blank" rel="noopener noreferrer" className="nav-pill" onClick={() => setMenuOpen(false)}>GitHub</a>
         </div>
         <button
           className="menu-toggle"
@@ -190,6 +192,11 @@ function App() {
       >
         ↑
       </button>
+      <InfoModal 
+        isOpen={activeModal !== null} 
+        onClose={() => setActiveModal(null)} 
+        type={activeModal} 
+      />
     </div>
   );
 }
