@@ -5,12 +5,12 @@ export async function fetchDisasterNews(locationName, category = 'all') {
   const locationShort = locationName.split(',')[0].trim();
 
   const queries = {
-    all: `${locationShort} flood OR cyclone OR drought OR heatwave OR disaster OR climate`,
-    flood: `${locationShort} flood OR rainfall OR waterlogging`,
-    heatwave: `${locationShort} heatwave OR heat wave OR temperature record`,
-    cyclone: `${locationShort} cyclone OR storm OR hurricane OR typhoon`,
-    drought: `${locationShort} drought OR water scarcity OR dry spell`,
-    climate: `${locationShort} climate change OR global warming OR environment`
+    all: `"${locationShort}" AND (flood OR cyclone OR drought OR heatwave OR disaster OR climate)`,
+    flood: `"${locationShort}" AND (flood OR rainfall OR waterlogging)`,
+    heatwave: `"${locationShort}" AND (heatwave OR "heat wave" OR "temperature record")`,
+    cyclone: `"${locationShort}" AND (cyclone OR storm OR hurricane OR typhoon)`,
+    drought: `"${locationShort}" AND (drought OR "water scarcity" OR "dry spell")`,
+    climate: `"${locationShort}" AND ("climate change" OR "global warming" OR environment)`
   };
 
   const query = queries[category] || queries.all;
