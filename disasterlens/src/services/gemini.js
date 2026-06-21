@@ -1,3 +1,5 @@
+import { calculateAllRisks } from '../utils/riskCalculator';
+
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 console.log(`[Diagnostics] VITE_GEMINI_API_KEY is ${API_KEY ? `defined (length: ${API_KEY.length})` : 'undefined'}`);
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`;
@@ -60,58 +62,40 @@ async function callGemini(prompt, onStatusUpdate) {
   }
 }
 
-export async function analyzeClimateRisk(locationName, summary, onStatusUpdate) {
-  const prompt = `You are a climate risk analyst. Analyze this climate data for ${locationName} and return ONLY a valid JSON object with no extra text, no markdown, no backticks.
+export async function generateRiskInsights(locationName, summary, riskScores, onStatusUpdate) {
+  const prompt = `You are a climate risk analyst. The following risk scores have ALREADY been calculated for ${locationName} using climate data analysis — do not recalculate or change them, only explain them:
 
-Climate Summary (10-year average):
+Heatwave Risk: ${riskScores.heatwave}/100
+Flood Risk: ${riskScores.flood}/100
+Drought Risk: ${riskScores.drought}/100
+Water Scarcity Risk: ${riskScores.waterScarcity}/100
+Cyclone Risk: ${riskScores.cyclone}/100
+Overall Risk: ${riskScores.overallRisk}/100
+
+Climate Data Context:
 - Average Max Temperature: ${summary.avgTemp.toFixed(1)}°C
 - Annual Rainfall: ${summary.avgRainfall.toFixed(0)}mm
 - Average Humidity: ${summary.avgHumidity.toFixed(1)}%
 - Max Wind Speed: ${summary.maxWind.toFixed(0)} km/h
-- Avg Dry Days Per Year: ${summary.avgDryDays.toFixed(0)}
-- Temperature Trend (2013–2023): ${summary.tempTrend > 0 ? '+' : ''}${summary.tempTrend}°C
+- Temperature Trend (10yr): ${summary.tempTrend > 0 ? '+' : ''}${summary.tempTrend}°C
 
-Return this exact JSON structure (replace values with your analysis, do not include angle brackets):
+Return ONLY a valid JSON object, no markdown, no extra text:
 {
-  "heatwave": 80,
-  "flood": 20,
-  "drought": 60,
-  "waterScarcity": 50,
-  "cyclone": 10,
-  "overallRisk": 55,
-  "summary": "This is a 2 sentence overall risk summary.",
-  "recommendations": ["action 1", "action 2", "action 3", "action 4", "action 5"]
+  "summary": "<2 sentence summary explaining WHY these specific scores make sense given the climate data, written naturally>",
+  "recommendations": ["<action 1>", "<action 2>", "<action 3>", "<action 4>", "<action 5>"]
 }`;
 
   try {
     const text = await callGemini(prompt, onStatusUpdate);
     const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-  } catch (err) {
-    console.error('Gemini API risk analysis failed after retries. Returning fallback data.', err);
+    const result = JSON.parse(clean);
     
-    // Estimate scores locally so they differ per city based on actual climate summary
-    const avgTemp = parseFloat(summary.avgTemp) || 20.0;
-    const avgRainfall = parseFloat(summary.avgRainfall) || 800.0;
-    const avgHumidity = parseFloat(summary.avgHumidity) || 60.0;
-    const maxWind = parseFloat(summary.maxWind) || 30.0;
-    const avgDryDays = parseFloat(summary.avgDryDays) || 100.0;
-    const tempTrend = parseFloat(summary.tempTrend) || 0.0;
-
-    const heatwave = Math.min(100, Math.max(10, Math.round((avgTemp - 15) * 3.2 + Math.max(0, tempTrend) * 12)));
-    const flood = Math.min(100, Math.max(10, Math.round((avgRainfall / 1600) * 65 + (avgHumidity / 100) * 35)));
-    const drought = Math.min(100, Math.max(10, Math.round((avgDryDays / 365) * 70 + Math.max(0, 30 - (avgRainfall / 40)))));
-    const waterScarcity = Math.min(100, Math.max(10, Math.round(drought * 0.85 + (avgDryDays / 365) * 15)));
-    const cyclone = Math.min(100, Math.max(10, Math.round((maxWind / 120) * 85)));
-    const overallRisk = Math.round((heatwave + flood + drought + waterScarcity + cyclone) / 5);
-
+    // Merge calculated scores with AI-generated insights
+    return { ...riskScores, summary: result.summary, recommendations: result.recommendations };
+  } catch (err) {
+    console.error('Gemini API generateRiskInsights failed. Returning local fallback summary.', err);
     return {
-      "heatwave": heatwave,
-      "flood": flood,
-      "drought": drought,
-      "waterScarcity": waterScarcity,
-      "cyclone": cyclone,
-      "overallRisk": overallRisk,
+      ...riskScores,
       "summary": `Climate risk analysis for ${locationName} indicates varying levels of vulnerability. Shifting seasonal patterns and temperature trends influence local thermal and environmental risk profiles.`,
       "recommendations": [
         "Install rainwater harvesting systems",
@@ -123,6 +107,11 @@ Return this exact JSON structure (replace values with your analysis, do not incl
       "isFallback": true
     };
   }
+}
+
+export async function analyzeClimateRisk(locationName, summary, onStatusUpdate) {
+  const riskScores = calculateAllRisks(summary);
+  return generateRiskInsights(locationName, summary, riskScores, onStatusUpdate);
 }
 
 export async function predictFutureClimate(locationName, summary, targetYear) {

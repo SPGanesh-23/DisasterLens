@@ -11,7 +11,8 @@ import ClimateChat from './components/ClimateChat';
 import LocationCompare from './components/LocationCompare';
 import InfoModal from './components/InfoModal';
 import { fetchClimateData } from './services/climate';
-import { analyzeClimateRisk } from './services/gemini';
+import { generateRiskInsights } from './services/gemini';
+import { calculateAllRisks } from './utils/riskCalculator';
 import './App.css';
 
 function App() {
@@ -46,7 +47,8 @@ function App() {
       setClimateData(climate);
 
       setLoadingStep('Running AI risk analysis...');
-      const risk = await analyzeClimateRisk(loc.name, climate.summary, (msg) => setLoadingStep(msg));
+      const riskScores = calculateAllRisks(climate.summary);
+      const risk = await generateRiskInsights(loc.name, climate.summary, riskScores, (msg) => setLoadingStep(msg));
       setRiskData(risk);
     } catch (err) {
       setError(err.message || 'An error occurred during analysis. Please check the console for more details.');

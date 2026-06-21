@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { geocodeLocation } from '../services/geocoding';
 import { fetchClimateData } from '../services/climate';
-import { analyzeClimateRisk } from '../services/gemini';
+import { generateRiskInsights } from '../services/gemini';
+import { calculateAllRisks } from '../utils/riskCalculator';
 import { getRiskLevel, RISK_LABELS } from '../utils/riskEngine';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -45,7 +46,8 @@ function LocationCompare({ primaryLocation, primaryClimateData, primaryRiskData 
       const climate = await fetchClimateData(location.lat, location.lon);
 
       // 3. Gemini Analysis
-      const risk = await analyzeClimateRisk(location.name, climate.summary);
+      const riskScores = calculateAllRisks(climate.summary);
+      const risk = await generateRiskInsights(location.name, climate.summary, riskScores);
 
       // Set state
       setSecondLocation(location);
