@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { geocodeLocation } from '../services/geocoding';
 import { fetchClimateData } from '../services/climate';
 import { generateRiskInsights } from '../services/gemini';
@@ -14,6 +14,14 @@ function LocationCompare({ primaryLocation, primaryClimateData, primaryRiskData 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('risks');
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsSmallScreen(window.innerWidth < 768);
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
 
   const truncate = (name, limit = 18) => {
     if (!name) return '';
@@ -305,14 +313,14 @@ function LocationCompare({ primaryLocation, primaryClimateData, primaryRiskData 
               <div className="charts-grid">
                 <div className="chart-card card">
                   <h4 className="chart-title">Temperature Trend Comparison (°C)</h4>
-                  <div className="chart-container" style={{ height: '260px', width: '100%' }}>
+                  <div className="chart-container compare-chart-container" style={{ width: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={combinedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
-                        <YAxis domain={['auto', 'auto']} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                        <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                        <YAxis domain={['auto', 'auto']} tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
                         <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#f1f5f9' }} />
-                        <Legend wrapperStyle={{ fontSize: 12, marginTop: 5 }} />
+                        <Legend wrapperStyle={{ fontSize: 10, marginTop: 5 }} />
                         <Line
                           type="monotone"
                           dataKey="primaryTemp"
@@ -338,14 +346,14 @@ function LocationCompare({ primaryLocation, primaryClimateData, primaryRiskData 
 
                 <div className="chart-card card">
                   <h4 className="chart-title">Annual Rainfall Comparison (mm)</h4>
-                  <div className="chart-container" style={{ height: '260px', width: '100%' }}>
+                  <div className="chart-container compare-chart-container" style={{ width: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={combinedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
-                        <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                        <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                        <YAxis tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
                         <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#f1f5f9' }} />
-                        <Legend wrapperStyle={{ fontSize: 12, marginTop: 5 }} />
+                        <Legend wrapperStyle={{ fontSize: 10, marginTop: 5 }} />
                         <Bar dataKey="primaryRain" name={truncate(primaryLocation.name, 18)} fill="#3b82f6" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="secondRain" name={truncate(secondLocation.name, 18)} fill="#06b6d4" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -378,10 +386,10 @@ function LocationCompare({ primaryLocation, primaryClimateData, primaryRiskData 
 
                       return (
                         <tr key={row.key}>
-                          <td>{row.name}</td>
-                          <td>{formatTableVal(pVal, row.key)}</td>
-                          <td>{formatTableVal(sVal, row.key)}</td>
-                          <td className="better-cell">
+                          <td data-label="Metric">{row.name}</td>
+                          <td data-label={primaryLocation.name}>{formatTableVal(pVal, row.key)}</td>
+                          <td data-label={secondLocation.name}>{formatTableVal(sVal, row.key)}</td>
+                          <td data-label="Better" className="better-cell">
                             {betterCity === 'Equal' ? (
                               <span className="equal-label">Equal</span>
                             ) : (

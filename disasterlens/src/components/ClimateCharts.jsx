@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function ClimateCharts({ climateData }) {
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsSmallScreen(window.innerWidth < 768);
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
+
   if (!climateData || !climateData.yearlyData) return null;
 
   const data = climateData.yearlyData;
@@ -20,17 +29,17 @@ function ClimateCharts({ climateData }) {
       <div className="charts-grid">
         <div className="chart-card card">
           <h4 className="chart-title">Average Maximum Temperature (°C)</h4>
-          <div className="chart-container" style={{ height: '300px' }}>
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
-                <YAxis domain={['auto', 'auto']} tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                <YAxis domain={['auto', 'auto']} tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
                 <Tooltip 
                   contentStyle={tooltipStyle}
                   itemStyle={{ color: '#f1f5f9' }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 10, marginTop: 5 }} />
                 <Line 
                   type="monotone" 
                   dataKey="avgTemp" 
@@ -47,18 +56,18 @@ function ClimateCharts({ climateData }) {
 
         <div className="chart-card card">
           <h4 className="chart-title">Annual Rainfall (mm) vs Dry Days</h4>
-          <div className="chart-container" style={{ height: '300px' }}>
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
-                <YAxis yAxisId="left" orientation="left" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                <XAxis dataKey="year" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                <YAxis yAxisId="left" orientation="left" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#64748b', fontSize: isSmallScreen ? 10 : 12 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} />
                 <Tooltip 
                   contentStyle={tooltipStyle}
                   itemStyle={{ color: '#f1f5f9' }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 10, marginTop: 5 }} />
                 <Bar yAxisId="left" dataKey="totalRain" name="Rainfall (mm)" fill="rgba(59,130,246,0.8)" radius={[4, 4, 0, 0]} />
                 <Bar yAxisId="right" dataKey="dryDays" name="Dry Days" fill="rgba(245,158,11,0.8)" radius={[4, 4, 0, 0]} />
               </BarChart>

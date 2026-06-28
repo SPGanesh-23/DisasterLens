@@ -183,7 +183,7 @@ function DisasterNewsFeed({ locationName, riskData }) {
                     {defaultEmoji}
                   </div>
                 ) : (
-                  <div className="news-card-media-wrapper" style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
+                  <div className="news-card-media-wrapper">
                     <img
                       src={article.image}
                       alt={article.title}
@@ -194,7 +194,7 @@ function DisasterNewsFeed({ locationName, riskData }) {
                         if (sibling) sibling.style.display = 'flex';
                       }}
                     />
-                    <div className="news-card-placeholder" style={{ display: 'none', height: '100%' }}>
+                    <div className="news-card-placeholder" style={{ display: 'none' }}>
                       {defaultEmoji}
                     </div>
                   </div>
