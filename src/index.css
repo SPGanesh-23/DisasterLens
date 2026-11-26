@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL ACCESSIBILITY & POLISH LAYER
+   ─────────────────────────────────────────────────────────
+   This file is intentionally minimal. App.css owns the design
+   tokens (colors, spacing, radii) and component styles — this
+   file ONLY adds cross-cutting behaviour that should apply to
+   the whole document, so it can never conflict with App.css.
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Respect "reduce motion" OS setting.
+      Disables all animations/transitions/smooth-scroll for users
+      who have asked for it (covers the new aurora drift, hero
+      floaters, gradient shimmer, fade-ins, etc.) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 2. Visible keyboard focus everywhere.
+      App.css only styles :focus for a couple of inputs — this
+      ensures every interactive element (links, buttons, pills,
+      chips) gets a clear focus ring for keyboard navigation. */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan, #38bdf8);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 3. Themed scrollbars for the whole page.
+      App.css already does this for the chat panel; this extends
+      the same look to the main page scrollbar so it doesn't
+      revert to a jarring default light scrollbar. */
+html {
+  scrollbar-color: var(--accent, #3b82f6) var(--bg-secondary, #0a1628);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary, #0a1628); }
+::-webkit-scrollbar-thumb {
+  background: var(--accent, #3b82f6);
+  border-radius: 999px;
+  border: 2px solid var(--bg-secondary, #0a1628);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan, #38bdf8); }
